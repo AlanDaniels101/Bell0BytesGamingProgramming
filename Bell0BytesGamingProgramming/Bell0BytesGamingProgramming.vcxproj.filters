@@ -27,6 +27,9 @@
     <ClInclude Include="Bell0BytesGamingProgramming.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Expected.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
