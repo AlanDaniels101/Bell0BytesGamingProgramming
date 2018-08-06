@@ -11,13 +11,16 @@
 
 #include "stdafx.h"
 
+// Lua and Sol
+#include <sol.hpp>
+
 // Project includes
 #include "App.h"
 #include "ServiceLocator.h"					// Global access to common services
+#include "StringConverter.h"
 #include "Window.h"
 
 #pragma endregion
-
 
 namespace
 {
@@ -87,7 +90,7 @@ namespace core
 		wc.hCursor = LoadCursor(0, IDC_ARROW);					// load the standard arrow cursor
 		wc.hIcon = LoadIcon(0, IDI_APPLICATION);				// load the standard application icon
 		wc.hIconSm = LoadIcon(0, IDI_APPLICATION);				// load the standard small application icon
-		wc.hInstance = directXApp->appInstance;					// handle to the core application instance
+		wc.hInstance = directXApp->m_appInstance;				// handle to the core application instance
 		wc.lpfnWndProc = MainWndProc;							// window procedure function
 		wc.lpszClassName = L"bell0window";						// class name
 		wc.lpszMenuName = 0;									// no menu
@@ -99,6 +102,16 @@ namespace core
 			return std::invalid_argument("The window class could not be registered!");
 		}
 
+		// Get the screen resolution from the Lua config file
+		ReadDesiredResolution();
+
+		// Convert to the necessary window size
+		RECT rect = { 0, 0, m_clientWidth, m_clientHeight };
+		if (!AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, false, WS_EX_OVERLAPPEDWINDOW))
+		{
+			return std::invalid_argument("The client size of the window could not be computed!");
+		}
+
 		// Create the window
 		mainWindow = CreateWindowEx(
 			WS_EX_OVERLAPPEDWINDOW,		// extended window style
@@ -107,11 +120,11 @@ namespace core
 			WS_OVERLAPPEDWINDOW,		// window style
 			CW_USEDEFAULT,				// horizontal position
 			CW_USEDEFAULT,				// vertical position
-			CW_USEDEFAULT,				// width
-			CW_USEDEFAULT,				// height
+			rect.right - rect.left,		// width
+			rect.bottom - rect.top,		// height
 			NULL,						// parent window handle
 			NULL,						// menu / child-window handle
-			directXApp->appInstance,	// application instance handle
+			directXApp->m_appInstance,	// application instance handle
 			NULL						// window creation data
 		);
 		if (!mainWindow)
@@ -140,5 +153,32 @@ namespace core
 
 		// Default Windows message handler
 		return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+
+	void Window::ReadDesiredResolution()
+	{
+		if (directXApp->m_hasValidConfigurationFile)
+		{
+			std::wstring pathToPrefsFile = directXApp->m_pathToConfigurationFiles + L"prefs.lua";
+		
+			try
+			{
+				sol::state lua;		// sol::state is a managed Lua interface
+				lua.script_file(util::StringConverter::ws2s(pathToPrefsFile));
+
+				// Read desired resolution from config file. Default: 200x200
+				m_clientWidth = lua["config"]["resolution"]["width"].get_or(200);
+				m_clientHeight = lua["config"]["resolution"]["height"].get_or(200);
+#ifndef NDEBUG
+				std::stringstream res;
+				res << "The client resolution was read from the Lua configuration file: " << m_clientWidth << " x " << m_clientHeight << ".";
+				util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::info>(res.str());
+#endif
+			}
+			catch (std::exception)
+			{
+				util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::warning>("Unable to read configuration file. Starting with default resolution: 200 x 200");
+			}
+		}
 	}
 }

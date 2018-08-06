@@ -27,9 +27,6 @@ namespace core
 		friend class Window;
 	
 	protected:
-		HINSTANCE appInstance;
-		Window* appWindow;
-
 		// Private ctor/dtor can be accessed by Window friend
 		DirectXApp(HINSTANCE hInstance);
 		~DirectXApp();
@@ -40,5 +37,21 @@ namespace core
 
 		// Enter the main event loop
 		util::Expected<int> Run();
+
+		// Logging helpers
+		bool GetPathToMyDocuments();
+		void CreateLoggingService();
+		bool CheckConfigurationFile();
+
+	protected:
+		HINSTANCE m_appInstance;
+		Window* m_appWindow;
+		bool m_isLoggerActive;
+
+		// Folder paths
+		std::wstring m_pathToMyDocuments;
+		std::wstring m_pathToLogFiles;
+		std::wstring m_pathToConfigurationFiles;
+		bool m_hasValidConfigurationFile;
 	};
 }

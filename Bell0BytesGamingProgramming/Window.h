@@ -35,11 +35,16 @@ namespace core
 		friend class DirectXApp;
 
 	private:
+		util::Expected<void> Init();	// initialize the window
+		void ReadDesiredResolution();	// get the screen resolution from the config file
+
+	private:
 		HWND mainWindow;				// handle to the main window
 		DirectXApp* directXApp;			// the core application class
 
-		util::Expected<void> Init();	// initialize the window
-
+		// Resolution
+		int m_clientWidth;
+		int m_clientHeight;
 	};
 }
 

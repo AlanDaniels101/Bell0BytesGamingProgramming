@@ -52,6 +52,7 @@ namespace util
 		debug,
 		warning,
 		error,
+		config,
 	};
 
 	// Logging daemon
@@ -159,35 +160,38 @@ namespace util
 	{
 		std::stringstream logStream;
 
-		SYSTEMTIME localTime;
-		GetLocalTime(&localTime);
-
-		// Log header: log#: MM/dd/yyyy hh:mm:ss
-		if (logLineNumber != 0)
+		if (!(severity == SeverityType::config))
 		{
-			logStream << "\r\n";
-		}
-		logStream << logLineNumber++ << ": " << localTime.wMonth << "/" << localTime.wDay << "/" << localTime.wYear << " " << localTime.wHour << ":" << localTime.wMinute << ":" << localTime.wSecond << "\t";
-	
-		// Log warning level
-		switch (severity)
-		{
-		case SeverityType::info:
-			logStream << "INFO:    ";
-			break;
-		case SeverityType::debug:
-			logStream << "DEBUG:   ";
-			break;
-		case SeverityType::warning:
-			logStream << "WARNING: ";
-			break;
-		case SeverityType::error:
-			logStream << "ERROR:   ";
-			break;
-		}
+			SYSTEMTIME localTime;
+			GetLocalTime(&localTime);
 
-		// Log thread name
-		logStream << threadName[std::this_thread::get_id()] << ":\t";
+			// Log header: log#: MM/dd/yyyy hh:mm:ss
+			if (logLineNumber != 0)
+			{
+				logStream << "\r\n";
+			}
+			logStream << logLineNumber++ << ": " << localTime.wMonth << "/" << localTime.wDay << "/" << localTime.wYear << " " << localTime.wHour << ":" << localTime.wMinute << ":" << localTime.wSecond << "\t";
+
+			// Log warning level
+			switch (severity)
+			{
+			case SeverityType::info:
+				logStream << "INFO:    ";
+				break;
+			case SeverityType::debug:
+				logStream << "DEBUG:   ";
+				break;
+			case SeverityType::warning:
+				logStream << "WARNING: ";
+				break;
+			case SeverityType::error:
+				logStream << "ERROR:   ";
+				break;
+			}
+
+			// Log thread name
+			logStream << threadName[std::this_thread::get_id()] << ":\t";
+		}
 
 		// Log message
 		logStream << stream.str();
