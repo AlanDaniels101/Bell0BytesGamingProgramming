@@ -19,6 +19,8 @@
 
 #pragma endregion
 
+#define NUM_WINDOWS 5
+
 namespace core
 {
 	class DirectXApp
@@ -38,6 +40,9 @@ namespace core
 		// Enter the main event loop
 		util::Expected<int> Run();
 
+		// Resize handling
+		void OnResize();
+
 		// Logging helpers
 		bool GetPathToMyDocuments();
 		void CreateLoggingService();
@@ -45,7 +50,7 @@ namespace core
 
 	protected:
 		HINSTANCE m_appInstance;
-		Window* m_appWindow;
+		Window* m_appWindow[NUM_WINDOWS];
 		bool m_isLoggerActive;
 
 		// Folder paths
@@ -53,5 +58,8 @@ namespace core
 		std::wstring m_pathToLogFiles;
 		std::wstring m_pathToConfigurationFiles;
 		bool m_hasValidConfigurationFile;
+
+		// Game state
+		bool m_isPaused;
 	};
 }

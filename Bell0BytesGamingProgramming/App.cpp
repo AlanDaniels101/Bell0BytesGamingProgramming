@@ -35,8 +35,13 @@ namespace core
 {
 	DirectXApp::DirectXApp(HINSTANCE hInstance) :
 		m_appInstance(hInstance),
-		m_appWindow(NULL)
-	{}
+		m_appWindow()
+	{
+		for (int i = 0; i < NUM_WINDOWS; i++)
+		{
+			m_appWindow[i] = NULL;
+		}
+	}
 
 	DirectXApp::~DirectXApp()
 	{
@@ -71,7 +76,11 @@ namespace core
 		// Create the application window
 		try 
 		{
-			m_appWindow = new Window(this);
+			m_appWindow[0] = new Window(this, L"bell0window0", core::Window::WindowColor::white, true);
+			m_appWindow[1] = new Window(this, L"bell0window1", core::Window::WindowColor::black, false);
+			m_appWindow[2] = new Window(this, L"bell0window2", core::Window::WindowColor::grey, false);
+			m_appWindow[3] = new Window(this, L"bell0window3", core::Window::WindowColor::lightGrey, false);
+			m_appWindow[4] = new Window(this, L"bell0window4", core::Window::WindowColor::darkGrey, false);
 		}
 		catch (std::runtime_error)
 		{
@@ -85,9 +94,13 @@ namespace core
 
 	void DirectXApp::Shutdown(util::Expected<void>* expected)
 	{
-		if (m_appWindow)
+		// Delete all windows
+		for (int i = 0; i < NUM_WINDOWS; i++)
 		{
-			delete m_appWindow;
+			if (m_appWindow[i])
+			{
+				delete m_appWindow[i];
+			}
 		}
 
 		if (m_appInstance)
@@ -121,10 +134,19 @@ namespace core
 				}
 			}
 
-			// ... game logic ...
+			if (!m_isPaused)
+			{
+				// ... game logic ...
+			}
+			
 		}
 
 		return (int)(msg.wParam);
+	}
+
+	void DirectXApp::OnResize()
+	{
+		util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::warning>("The window was resized. The game graphics must be updated!");
 	}
 
 	bool DirectXApp::GetPathToMyDocuments()
