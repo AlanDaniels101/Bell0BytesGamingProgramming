@@ -31,16 +31,14 @@ namespace
 
 namespace core
 {
-	HWND Window::m_mainWindow = NULL;
-
 	// Window procedure
 	LRESULT CALLBACK MainWndProc(HWND hWnd, unsigned int msg, WPARAM wParam, LPARAM lParam)
 	{
-		// FOrward messages from this global window procedure to the member window procedure
+		// Forward messages from this global window procedure to the member window procedure
 		return window->MsgProc(hWnd, msg, wParam, lParam);
 	}
 
-	Window::Window(DirectXApp* directXApp, LPCWSTR className, WindowColor windowColor, bool isMainWindow) :
+	Window::Window(DirectXApp* directXApp) :
 		m_hWindow(NULL),
 		directXApp(directXApp),
 		m_clientWidth(200),
@@ -52,7 +50,7 @@ namespace core
 		window = this;
 
 		// Initialize the window
-		util::Expected<void> ret = this->Init(className, windowColor, isMainWindow);
+		util::Expected<void> ret = this->Init();
 		if (!ret.isValid())
 		{
 			try 
@@ -73,11 +71,6 @@ namespace core
 
 	Window::~Window()
 	{
-		if (m_hWindow == Window::m_mainWindow)
-		{
-			Window::m_mainWindow = NULL;
-		}
-
 		if (m_hWindow)
 		{
 			m_hWindow = NULL;
@@ -91,29 +84,8 @@ namespace core
 		util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::info>("Main window class destruction was successful.");
 	}
 
-	util::Expected<void> Window::Init(LPCWSTR className, WindowColor windowColor, bool isMainWindow)
+	util::Expected<void> Window::Init()
 	{
-		// Select the window color
-		HBRUSH windowBackgroundColor = (HBRUSH)GetStockObject(WHITE_BRUSH);
-		switch (windowColor)
-		{
-		case WindowColor::white:
-			windowBackgroundColor = (HBRUSH)GetStockObject(WHITE_BRUSH);
-			break;
-		case WindowColor::black:
-			windowBackgroundColor = (HBRUSH)GetStockObject(BLACK_BRUSH);
-			break;
-		case WindowColor::grey:
-			windowBackgroundColor = (HBRUSH)GetStockObject(GRAY_BRUSH);
-			break;
-		case WindowColor::lightGrey:
-			windowBackgroundColor = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
-			break;
-		case WindowColor::darkGrey:
-			windowBackgroundColor = (HBRUSH)GetStockObject(DKGRAY_BRUSH);
-			break;
-		}
-
 		// specify the window class description
 		WNDCLASSEX wc;
 
@@ -121,13 +93,13 @@ namespace core
 		wc.cbClsExtra = 0;										// no extra bytes needed
 		wc.cbSize = sizeof(WNDCLASSEX);							// size of the window description structure
 		wc.cbWndExtra = 0;										// no extra bytes needed
-		wc.hbrBackground = windowBackgroundColor;				// brush to repaint the background with
+		wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);	// brush to repaint the background with
 		wc.hCursor = LoadCursor(0, IDC_ARROW);					// load the standard arrow cursor
 		wc.hIcon = LoadIcon(0, IDI_APPLICATION);				// load the standard application icon
 		wc.hIconSm = LoadIcon(0, IDI_APPLICATION);				// load the standard small application icon
 		wc.hInstance = directXApp->m_appInstance;				// handle to the core application instance
 		wc.lpfnWndProc = MainWndProc;							// window procedure function
-		wc.lpszClassName = className;							// class name
+		wc.lpszClassName = L"bell0window";						// class name
 		wc.lpszMenuName = 0;									// no menu
 		wc.style = CS_HREDRAW | CS_VREDRAW;						// send WM_SIZE message when either the height or the width of the client area are changed
 	
@@ -151,7 +123,7 @@ namespace core
 		m_hWindow = CreateWindowEx(
 			WS_EX_OVERLAPPEDWINDOW,		// extended window style
 			wc.lpszClassName,			// registered class name
-			className,					// window name
+			L"bell0window",				// window name
 			WS_OVERLAPPEDWINDOW,		// window style
 			CW_USEDEFAULT,				// horizontal position
 			CW_USEDEFAULT,				// vertical position
@@ -165,11 +137,6 @@ namespace core
 		if (!m_hWindow)
 		{
 			return std::invalid_argument("The window could not be created!");
-		}
-
-		if (isMainWindow)
-		{
-			Window::m_mainWindow = m_hWindow;
 		}
 
 		// Show and update the window
@@ -186,28 +153,41 @@ namespace core
 		switch (msg)
 		{
 		case WM_DESTROY:
+			util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::info>("The main window was flagged for destruction.");
+			PostQuitMessage(0);
 			return 0;
 
 		case WM_CLOSE:
-			if (hWnd == Window::m_mainWindow)
-			{
-				if (MessageBox(hWnd, L"Are you sure you want to quit?", L"Confirmation", MB_YESNO | MB_ICONQUESTION) == IDYES)
-				{
-					util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::info>("The main window was flagged for destruction.");
-					PostQuitMessage(0);
-				}
-			}
+			// Pause the game
+			directXApp->m_isPaused = true;
+			directXApp->timer->Stop();
+
+			// Display a confirmation message box
+			if (MessageBox(m_hWindow, L"Are you sure you want to quit?", L"Confirmation", MB_YESNO | MB_ICONQUESTION) == IDYES)
+				return DefWindowProc(m_hWindow, msg, wParam, lParam);
 			else
 			{
-				return DestroyWindow(hWnd);
+				// unpause the game
+				directXApp->m_isPaused = false;
+				directXApp->timer->Start();
+				return 0;
 			}
-			return 0;
 
 		case WM_ACTIVATE:
 			if (LOWORD(wParam) == WA_INACTIVE)
+			{
 				directXApp->m_isPaused = true;
+				directXApp->timer->Stop();
+			}				
 			else
+			{
+				if (directXApp->m_hasStarted)
+				{
+					directXApp->timer->Start();
+				}
 				directXApp->m_isPaused = false;
+			}
+				
 			return 0;
 
 		case WM_MENUCHAR:
@@ -256,6 +236,7 @@ namespace core
 			// Window is being resized via dragging
 			m_isResizing = true;
 			directXApp->m_isPaused = true;
+			directXApp->timer->Stop();
 			return 0;
 
 		case WM_EXITSIZEMOVE:
@@ -263,6 +244,7 @@ namespace core
 			m_isResizing = false;
 			directXApp->OnResize();
 			directXApp->m_isPaused = false;
+			directXApp->timer->Start();
 			return 0;
 
 		case WM_GETMINMAXINFO:

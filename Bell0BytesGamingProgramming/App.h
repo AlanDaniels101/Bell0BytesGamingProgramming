@@ -16,10 +16,9 @@
 // Project includes
 #include "Expected.h"		// Custom exceptions
 #include "Window.h"			// Window class
+#include "Timer.h"			// Timer
 
 #pragma endregion
-
-#define NUM_WINDOWS 5
 
 namespace core
 {
@@ -37,20 +36,26 @@ namespace core
 		virtual util::Expected<void> Init();
 		virtual void Shutdown(util::Expected<void>* expected = NULL);
 
-		// Enter the main event loop
-		util::Expected<int> Run();
+		// Game loop
+		virtual util::Expected<int> Run();				// enter the main event loop
+		void Update(double deltaTime);			// update the game world
 
 		// Resize handling
-		void OnResize();
+		virtual void OnResize();
 
 		// Logging helpers
 		bool GetPathToMyDocuments();
 		void CreateLoggingService();
 		bool CheckConfigurationFile();
 
+		// Timer functions
+		void CalculateFrameStatistics();		// compute fps / mspf
+
 	protected:
 		HINSTANCE m_appInstance;
-		Window* m_appWindow[NUM_WINDOWS];
+		Window* m_appWindow;
+
+		// Logger state
 		bool m_isLoggerActive;
 
 		// Folder paths
@@ -61,5 +66,11 @@ namespace core
 
 		// Game state
 		bool m_isPaused;
+		bool m_hasStarted;
+
+		// Timer
+		Timer* timer;
+		int fps;					// frames per second
+		double mspf;				// milliseconds per frame
 	};
 }

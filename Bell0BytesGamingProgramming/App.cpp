@@ -35,12 +35,15 @@ namespace core
 {
 	DirectXApp::DirectXApp(HINSTANCE hInstance) :
 		m_appInstance(hInstance),
-		m_appWindow()
+		m_appWindow(NULL),
+		m_isLoggerActive(false),
+		m_hasValidConfigurationFile(false),
+		m_isPaused(true),
+		timer(NULL),
+		fps(0),
+		mspf(0.0),
+		m_hasStarted(false)
 	{
-		for (int i = 0; i < NUM_WINDOWS; i++)
-		{
-			m_appWindow[i] = NULL;
-		}
 	}
 
 	DirectXApp::~DirectXApp()
@@ -73,14 +76,20 @@ namespace core
 			util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::warning>("Non-existent or invalid configuration file. Starting with default settings.");
 		}
 
-		// Create the application window
-		try 
+		// Create timer
+		try
 		{
-			m_appWindow[0] = new Window(this, L"bell0window0", core::Window::WindowColor::white, true);
-			m_appWindow[1] = new Window(this, L"bell0window1", core::Window::WindowColor::black, false);
-			m_appWindow[2] = new Window(this, L"bell0window2", core::Window::WindowColor::grey, false);
-			m_appWindow[3] = new Window(this, L"bell0window3", core::Window::WindowColor::lightGrey, false);
-			m_appWindow[4] = new Window(this, L"bell0window4", core::Window::WindowColor::darkGrey, false);
+			timer = new Timer();
+		}
+		catch (std::runtime_error)
+		{
+			return std::runtime_error("The high-precision timer could not be started!");
+		}
+
+		// Create the application window
+		try
+		{
+			m_appWindow = new Window(this);
 		}
 		catch (std::runtime_error)
 		{
@@ -88,24 +97,26 @@ namespace core
 		}
 
 		// log and return success
+		m_hasStarted = true;
 		util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::info>("The DirectX application initialization was successful.");
 		return {};
 	}
 
 	void DirectXApp::Shutdown(util::Expected<void>* expected)
 	{
-		// Delete all windows
-		for (int i = 0; i < NUM_WINDOWS; i++)
+		if (m_appWindow)
 		{
-			if (m_appWindow[i])
-			{
-				delete m_appWindow[i];
-			}
+			delete m_appWindow;
 		}
 
 		if (m_appInstance)
 		{
 			m_appInstance = NULL;
+		}
+
+		if (timer)
+		{
+			delete timer;
 		}
 	
 		if (m_isLoggerActive)
@@ -117,6 +128,12 @@ namespace core
 	// Main event loop
 	util::Expected<int> DirectXApp::Run()
 	{
+#ifndef NDEBUG
+		util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::info>("Entering the game loop...");
+#endif
+		// Reset and start the timer
+		timer->Reset();
+
 		bool continueRunning = true;
 		MSG msg = { 0 };
 
@@ -134,19 +151,40 @@ namespace core
 				}
 			}
 
+			// Let the timer tick
+			timer->Tick();
+
 			if (!m_isPaused)
 			{
-				// ... game logic ...
+				// Compute FPS
+				CalculateFrameStatistics();
+
+				// ... get input ...
+
+				// Update based on elapsed time between frames
+				Update(timer->GetDeltaTime());
+
+				// ... generate output ...
 			}
 			
 		}
+#ifndef NDEBUG
+		util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::info>("Leaving the game loop...");
+#endif
 
 		return (int)(msg.wParam);
 	}
 
+	void DirectXApp::Update(double deltaTime)
+	{
+
+	}
+
 	void DirectXApp::OnResize()
 	{
+#ifndef NDEBUG
 		util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::warning>("The window was resized. The game graphics must be updated!");
+#endif
 	}
 
 	bool DirectXApp::GetPathToMyDocuments()
@@ -257,5 +295,27 @@ namespace core
 
 		m_hasValidConfigurationFile = true;
 		return true;
+	}
+
+	void DirectXApp::CalculateFrameStatistics()
+	{
+		static int nFrames;				// number of frames seen
+		static double elapsedTime;		// time since last call
+		nFrames++;
+
+		// Compute average statistics over one second
+		if ((timer->GetTotalTime() - elapsedTime) >= 1.0)
+		{
+			fps = nFrames;
+			mspf = 1000.0 / (double)fps;
+
+			// show statistics as window caption
+			std::wstring windowCaption = L"bell0bytes engine --- fps: " + std::to_wstring(fps) + L" --- mspf: " + std::to_wstring(mspf);
+			SetWindowText(m_appWindow->m_hWindow, windowCaption.c_str());
+
+			// Reset
+			nFrames = 0;
+			elapsedTime += 1.0;
+		}
 	}
 }

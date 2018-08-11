@@ -27,16 +27,7 @@ namespace core
 	class Window
 	{
 	public:
-		enum class WindowColor {
-			white = 0,
-			black,
-			grey,
-			lightGrey,
-			darkGrey,
-		};
-
-	public:
-		Window(DirectXApp* directXApp, LPCWSTR className, WindowColor windowColor, bool isMainWindow);
+		Window(DirectXApp* directXApp);
 		~Window();
 
 		inline HWND GetMainWindowHandle() { return m_hWindow; };
@@ -46,12 +37,11 @@ namespace core
 		friend class DirectXApp;
 
 	private:
-		util::Expected<void> Init(LPCWSTR className, WindowColor windowColor, bool isMainWindow);	// initialize the window
-		void ReadDesiredResolution();																// get the screen resolution from the config file
+		util::Expected<void> Init();		// initialize the window
+		void ReadDesiredResolution();		// get the screen resolution from the config file
 
 	private:
 		HWND m_hWindow;						// handle to the window
-		static HWND m_mainWindow;	// handle to the main window
 		DirectXApp* directXApp;				// the core application class
 
 		// Resolution
