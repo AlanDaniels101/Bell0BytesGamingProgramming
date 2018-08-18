@@ -26,7 +26,7 @@ namespace core
 	{
 	public:
 		friend class Window;
-	
+#pragma region "Functions"
 	protected:
 		// Private ctor/dtor can be accessed by Window friend
 		DirectXApp(HINSTANCE hInstance);
@@ -43,34 +43,48 @@ namespace core
 		// Resize handling
 		virtual void OnResize();
 
+		// Generate output
+		virtual void Render(double farseer);
+
+		bool FileLoggerIsActive() { return m_isLoggerActive; }
+
+
+	private:
+		void CalculateFrameStatistics();		// compute fps / mspf
+
 		// Logging helpers
 		bool GetPathToMyDocuments();
 		void CreateLoggingService();
 		bool CheckConfigurationFile();
-
-		// Timer functions
-		void CalculateFrameStatistics();		// compute fps / mspf
-
+#pragma endregion
+#pragma region "Variables"
 	protected:
 		HINSTANCE m_appInstance;
 		Window* m_appWindow;
 
-		// Logger state
-		bool m_isLoggerActive;
+		// Game state
+		bool m_isPaused;
 
+	private:
 		// Folder paths
 		std::wstring m_pathToMyDocuments;
 		std::wstring m_pathToLogFiles;
 		std::wstring m_pathToConfigurationFiles;
+
 		bool m_hasValidConfigurationFile;
 
-		// Game state
-		bool m_isPaused;
+		// Logger state
+		bool m_isLoggerActive;
+
 		bool m_hasStarted;
 
 		// Timer
 		Timer* timer;
 		int fps;					// frames per second
 		double mspf;				// milliseconds per frame
+		double dt;					// delta-t, the constant update rate of the game
+		double maxSkipFrames;		// max number of frames to skip in the update loop
+	
+#pragma endregion
 	};
 }

@@ -42,6 +42,8 @@ namespace core
 		timer(NULL),
 		fps(0),
 		mspf(0.0),
+		dt(1000/(double)240),
+		maxSkipFrames(10),
 		m_hasStarted(false)
 	{
 	}
@@ -134,6 +136,9 @@ namespace core
 		// Reset and start the timer
 		timer->Reset();
 
+		double accumulatedTime = 0.0;	// time accumulated by rendering rather than updating physics
+		int nLoops = 0;					// number of completed loops while updating the game
+
 		bool continueRunning = true;
 		MSG msg = { 0 };
 
@@ -161,10 +166,20 @@ namespace core
 
 				// ... get input ...
 
-				// Update based on elapsed time between frames
-				Update(timer->GetDeltaTime());
+				// Add the rendering time (time between frames)
+				accumulatedTime += timer->GetDeltaTime();
 
-				// ... generate output ...
+				// Update in fixed steps of delta-t until the accumulatedTime has been used up
+				nLoops = 0;
+				while (accumulatedTime >= dt && nLoops < maxSkipFrames)
+				{
+					Update(dt);
+					accumulatedTime -= dt;
+					nLoops++;
+				}
+
+				// Render, but predict the future by accounting for the remaining accumulatedTime
+				Render(accumulatedTime / dt);
 			}
 			
 		}
@@ -178,6 +193,11 @@ namespace core
 	void DirectXApp::Update(double deltaTime)
 	{
 
+	}
+
+	void DirectXApp::Render(double farseer)
+	{
+	
 	}
 
 	void DirectXApp::OnResize()
