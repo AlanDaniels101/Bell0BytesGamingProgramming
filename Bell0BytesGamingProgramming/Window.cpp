@@ -16,6 +16,9 @@
 // Lua and Sol
 #include <sol.hpp>
 
+// Resources
+#include "resource.h"
+
 // Project includes
 #include "App.h"
 #include "ServiceLocator.h"					// Global access to common services
@@ -95,8 +98,8 @@ namespace core
 		wc.cbWndExtra = 0;										// no extra bytes needed
 		wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);	// brush to repaint the background with
 		wc.hCursor = LoadCursor(0, IDC_ARROW);					// load the standard arrow cursor
-		wc.hIcon = LoadIcon(0, IDI_APPLICATION);				// load the standard application icon
-		wc.hIconSm = LoadIcon(0, IDI_APPLICATION);				// load the standard small application icon
+		wc.hIcon = (HICON)LoadImage(directXApp->m_appInstance, MAKEINTRESOURCE(IDI_BARKING_DOG), IMAGE_ICON, LR_DEFAULTSIZE, LR_DEFAULTSIZE, LR_DEFAULTCOLOR | LR_SHARED);				// load the barking dog icon
+		wc.hIconSm = (HICON)LoadImage(directXApp->m_appInstance, MAKEINTRESOURCE(IDI_BARKING_DOG), IMAGE_ICON, LR_DEFAULTSIZE, LR_DEFAULTSIZE, LR_DEFAULTCOLOR | LR_SHARED);
 		wc.hInstance = directXApp->m_appInstance;				// handle to the core application instance
 		wc.lpfnWndProc = MainWndProc;							// window procedure function
 		wc.lpszClassName = L"bell0window";						// class name

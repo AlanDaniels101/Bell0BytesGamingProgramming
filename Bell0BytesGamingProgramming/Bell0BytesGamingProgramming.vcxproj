@@ -185,6 +185,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="Bell0BytesGamingProgramming.ico" />
+    <Image Include="Resources\Icons\barkingDog.ico" />
     <Image Include="small.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
