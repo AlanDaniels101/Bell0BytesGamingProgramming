@@ -127,6 +127,17 @@ namespace core
 		}
 	}
 
+	// Acquire user input
+	void DirectXApp::OnKeyDown(WPARAM wParam, LPARAM lParam)
+	{
+		switch (wParam)
+		{
+		case VK_ESCAPE:
+			PostMessage(m_appWindow->m_hWindow, WM_CLOSE, 0, 0);
+			break;
+		}
+	}
+
 	// Main event loop
 	util::Expected<int> DirectXApp::Run()
 	{

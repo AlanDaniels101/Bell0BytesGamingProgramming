@@ -252,6 +252,10 @@ namespace core
 			((MINMAXINFO*)lParam)->ptMinTrackSize.x = 200;
 			((MINMAXINFO*)lParam)->ptMinTrackSize.y = 200;
 			return 0;
+
+		case WM_KEYDOWN:
+			directXApp->OnKeyDown(wParam, lParam);
+			return 0;
 		}
 
 		// Default Windows message handler

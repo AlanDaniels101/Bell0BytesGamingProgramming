@@ -36,9 +36,12 @@ namespace core
 		virtual util::Expected<void> Init();
 		virtual void Shutdown(util::Expected<void>* expected = NULL);
 
+		// Acquire user input
+		virtual void OnKeyDown(WPARAM wParam, LPARAM lParam);
+
 		// Game loop
-		virtual util::Expected<int> Run();				// enter the main event loop
-		void Update(double deltaTime);			// update the game world
+		virtual util::Expected<int> Run();			// enter the main event loop
+		void Update(double deltaTime);				// update the game world
 
 		// Resize handling
 		virtual void OnResize();
