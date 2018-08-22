@@ -44,7 +44,8 @@ namespace core
 		mspf(0.0),
 		dt(1000/(double)240),
 		maxSkipFrames(10),
-		m_hasStarted(false)
+		m_hasStarted(false),
+		direct3D(NULL)
 	{
 	}
 
@@ -98,6 +99,16 @@ namespace core
 			return std::runtime_error("DirectXApp was unable to create the main window!");
 		}
 
+		// Initialize Direct3D for graphics
+		try
+		{
+			direct3D = new graphics::Direct3D();
+		}
+		catch (std::runtime_error)
+		{
+			return std::runtime_error("DirectXApp was unable to initialize Direct3D!");
+		}
+
 		// log and return success
 		m_hasStarted = true;
 		util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::info>("The DirectX application initialization was successful.");
@@ -106,6 +117,11 @@ namespace core
 
 	void DirectXApp::Shutdown(util::Expected<void>* expected)
 	{
+		if (direct3D)
+		{
+			delete direct3D;
+		}
+
 		if (m_appWindow)
 		{
 			delete m_appWindow;

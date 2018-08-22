@@ -17,6 +17,7 @@
 #include "Expected.h"		// Custom exceptions
 #include "Window.h"			// Window class
 #include "Timer.h"			// Timer
+#include "Direct3D.h"		// Graphics
 
 #pragma endregion
 
@@ -64,6 +65,7 @@ namespace core
 	protected:
 		HINSTANCE m_appInstance;
 		Window* m_appWindow;
+		graphics::Direct3D* direct3D;
 
 		// Game state
 		bool m_isPaused;
