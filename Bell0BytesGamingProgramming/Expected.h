@@ -72,6 +72,9 @@ namespace util
 		}
 
 		// Create Expected<T> from exception E
+		template<typename E>
+		Expected<T>(E const& e) : exception(std::make_exception_ptr(e)), isResultValid(false) {}
+
 		template<class E>
 		static Expected<T> fromException(const E& e)
 		{

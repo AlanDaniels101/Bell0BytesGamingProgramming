@@ -30,17 +30,35 @@
 
 #pragma endregion
 
+namespace core
+{
+	class DirectXApp;
+}
+
 namespace graphics
 {
 	class Direct3D
 	{
 	public:
-		Direct3D();
+		Direct3D(core::DirectXApp* directXApp);
 		~Direct3D();
 
+		util::Expected<void> Present();							// display the next backbuffer
+
+		friend class core::DirectXApp;
+
 	private:
-		Microsoft::WRL::ComPtr<ID3D11Device> dev;
-		Microsoft::WRL::ComPtr<ID3D11DeviceContext> devCon;
+		util::Expected<void> CreateResources();					// create device resources
+		util::Expected<void> OnResize();						// resize resources
+
+	private:
+		Microsoft::WRL::ComPtr<ID3D11Device> dev;				// device
+		Microsoft::WRL::ComPtr<ID3D11DeviceContext> devCon;		// device context
+		Microsoft::WRL::ComPtr<IDXGISwapChain> swapChain;		// swap chain
+
+		DXGI_FORMAT desiredColoredFormat;
+
+		core::DirectXApp* directXApp;
 	};
 }
 

@@ -102,7 +102,7 @@ namespace core
 		// Initialize Direct3D for graphics
 		try
 		{
-			direct3D = new graphics::Direct3D();
+			direct3D = new graphics::Direct3D(this);
 		}
 		catch (std::runtime_error)
 		{
@@ -222,16 +222,17 @@ namespace core
 
 	}
 
-	void DirectXApp::Render(double farseer)
-	{
-	
-	}
-
-	void DirectXApp::OnResize()
+	util::Expected<void> DirectXApp::OnResize()
 	{
 #ifndef NDEBUG
 		util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::warning>("The window was resized. The game graphics must be updated!");
 #endif
+		if (!direct3D->OnResize().isValid())
+		{
+			return std::runtime_error("Unable to resize Direct3D resources!");
+		}
+
+		return {};
 	}
 
 	bool DirectXApp::GetPathToMyDocuments()

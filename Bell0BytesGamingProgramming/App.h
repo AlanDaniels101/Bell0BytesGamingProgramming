@@ -27,6 +27,7 @@ namespace core
 	{
 	public:
 		friend class Window;
+		friend class graphics::Direct3D;
 #pragma region "Functions"
 	protected:
 		// Private ctor/dtor can be accessed by Window friend
@@ -42,13 +43,13 @@ namespace core
 
 		// Game loop
 		virtual util::Expected<int> Run();			// enter the main event loop
-		void Update(double deltaTime);				// update the game world
+		virtual void Update(double deltaTime) = 0;	// update the game world
 
 		// Resize handling
-		virtual void OnResize();
+		virtual util::Expected<void> OnResize();
 
 		// Generate output
-		virtual void Render(double farseer);
+		virtual util::Expected<int> Render(double farseer) = 0;
 
 		bool FileLoggerIsActive() { return m_isLoggerActive; }
 

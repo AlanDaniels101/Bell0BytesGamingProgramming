@@ -207,7 +207,8 @@ namespace core
 			{
 				m_isMinimized = false;
 				m_isMaximized = true;
-				directXApp->OnResize();
+				if (directXApp->m_hasStarted)
+					directXApp->OnResize();
 				directXApp->m_isPaused = false;
 			}
 			else if (wParam == SIZE_RESTORED)
@@ -216,13 +217,15 @@ namespace core
 				if (m_isMinimized)
 				{
 					m_isMinimized = false;
-					directXApp->OnResize();
+					if (directXApp->m_hasStarted)
+						directXApp->OnResize();
 					directXApp->m_isPaused = false;
 				}
 				else if (m_isMaximized)
 				{
 					m_isMaximized = false;
-					directXApp->OnResize();
+					if (directXApp->m_hasStarted)
+						directXApp->OnResize();
 				}
 				else if (m_isResizing)
 				{
@@ -230,7 +233,8 @@ namespace core
 				}
 				else
 				{
-					directXApp->OnResize();
+					if (directXApp->m_hasStarted)
+						directXApp->OnResize();
 				}
 			}
 			return 0;
