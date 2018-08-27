@@ -27,6 +27,12 @@
 
 #pragma endregion
 
+#pragma region "Statically-Linked Libraries"
+
+#pragma comment(lib, "liblua53.a")
+
+#pragma endregion
+
 namespace
 {
 	core::Window* window = NULL;
@@ -249,7 +255,8 @@ namespace core
 		case WM_EXITSIZEMOVE:
 			// Dragging resize finished
 			m_isResizing = false;
-			directXApp->OnResize();
+			if (directXApp->m_hasStarted)
+				directXApp->OnResize();
 			directXApp->m_isPaused = false;
 			directXApp->timer->Start();
 			return 0;

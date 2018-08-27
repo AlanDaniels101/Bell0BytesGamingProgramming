@@ -140,6 +140,11 @@ namespace graphics
 
 	util::Expected<void> Direct3D::OnResize()
 	{
+		if (directXApp->direct2D)
+		{
+			directXApp->direct2D->devCon->SetTarget(nullptr);
+		}
+
 		devCon->ClearState();
 		renderTargetView = nullptr;
 		depthStencilView = nullptr;
@@ -205,10 +210,25 @@ namespace graphics
 
 		devCon->RSSetViewports(1, &vp);
 
+		// Create Direct2D render target bitmap associated with the swapchain backbuffer
+		if (directXApp->direct2D)
+		{
+			if (!directXApp->direct2D->CreateBitmapRenderTarget().isValid())
+			{
+				return std::runtime_error("Direct3D was unable to resize the Direct2D bitmap render target!");
+			}
+		}
+
+		// Log success
+		if (directXApp->m_hasStarted)
+		{
+			util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::info>("The Direct3D and Direct2D resources were resized successfully.");
+		}
+
 		return {};
 	}
 
-	util::Expected<void> Direct3D::Present()
+	util::Expected<int> Direct3D::Present()
 	{
 		HRESULT hr = swapChain->Present(0, DXGI_PRESENT_DO_NOT_WAIT);
 		if (FAILED(hr) && hr != DXGI_ERROR_WAS_STILL_DRAWING)
@@ -217,7 +237,7 @@ namespace graphics
 			return std::runtime_error("Direct3D failed to present the scene!");
 		}
 
-		return {};
+		return 0;
 	}
 
 	void Direct3D::ClearBuffers()

@@ -20,6 +20,8 @@
 
 // Project includes
 #include "ServiceLocator.h"					// Global access to common services
+#include "Direct3D.h"
+#include "Direct2D.h"
 #include "App.h"
 
 #pragma endregion
@@ -45,7 +47,9 @@ namespace core
 		dt(1000/(double)240),
 		maxSkipFrames(10),
 		m_hasStarted(false),
-		direct3D(NULL)
+		showFPS(true),
+		direct3D(NULL),
+		direct2D(NULL)
 	{
 	}
 
@@ -109,6 +113,16 @@ namespace core
 			return std::runtime_error("DirectXApp was unable to initialize Direct3D!");
 		}
 
+		// Initialize Direct2D
+		try
+		{
+			direct2D = new graphics::Direct2D(this);
+		}
+		catch (std::runtime_error)
+		{
+			return std::runtime_error("DirectXApp was unable to initialize Direct2D!");
+		}
+
 		// log and return success
 		m_hasStarted = true;
 		util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::info>("The DirectX application initialization was successful.");
@@ -117,6 +131,11 @@ namespace core
 
 	void DirectXApp::Shutdown(util::Expected<void>* expected)
 	{
+		if (direct2D)
+		{
+			delete direct2D;
+		}
+
 		if (direct3D)
 		{
 			delete direct3D;
@@ -125,11 +144,6 @@ namespace core
 		if (m_appWindow)
 		{
 			delete m_appWindow;
-		}
-
-		if (m_appInstance)
-		{
-			m_appInstance = NULL;
 		}
 
 		if (timer)
@@ -148,8 +162,16 @@ namespace core
 	{
 		switch (wParam)
 		{
+		case VK_F1:
+			// Toggle displaying FPS to screen
+			showFPS = !showFPS;
+			break;
+
 		case VK_ESCAPE:
 			PostMessage(m_appWindow->m_hWindow, WM_CLOSE, 0, 0);
+			break;
+
+		default:
 			break;
 		}
 	}
@@ -189,9 +211,14 @@ namespace core
 			if (!m_isPaused)
 			{
 				// Compute FPS
-				CalculateFrameStatistics();
+				if (!CalculateFrameStatistics().isValid())
+				{
+					return util::Expected<int>("Critical error: Unable to calculate frame statistics!");
+				}
 
 				// ... get input ...
+
+				util::Expected<int> result(0);
 
 				// Add the rendering time (time between frames)
 				accumulatedTime += timer->GetDeltaTime();
@@ -200,13 +227,21 @@ namespace core
 				nLoops = 0;
 				while (accumulatedTime >= dt && nLoops < maxSkipFrames)
 				{
-					Update(dt);
+					result = Update(dt);
+					if (!result.isValid())
+					{
+						return result;
+					}
 					accumulatedTime -= dt;
 					nLoops++;
 				}
 
 				// Render, but predict the future by accounting for the remaining accumulatedTime
-				Render(accumulatedTime / dt);
+				result = Render(accumulatedTime / dt);
+				if (!result.isValid())
+				{
+					return result;
+				}
 			}
 			
 		}
@@ -215,11 +250,6 @@ namespace core
 #endif
 
 		return (int)(msg.wParam);
-	}
-
-	void DirectXApp::Update(double deltaTime)
-	{
-
 	}
 
 	util::Expected<void> DirectXApp::OnResize()
@@ -345,7 +375,7 @@ namespace core
 		return true;
 	}
 
-	void DirectXApp::CalculateFrameStatistics()
+	util::Expected<void> DirectXApp::CalculateFrameStatistics()
 	{
 		static int nFrames;				// number of frames seen
 		static double elapsedTime;		// time since last call
@@ -357,13 +387,32 @@ namespace core
 			fps = nFrames;
 			mspf = 1000.0 / (double)fps;
 
-			// show statistics as window caption
-			std::wstring windowCaption = L"bell0bytes engine --- fps: " + std::to_wstring(fps) + L" --- mspf: " + std::to_wstring(mspf);
-			SetWindowText(m_appWindow->m_hWindow, windowCaption.c_str());
+			if (showFPS)
+			{
+				std::wostringstream outFPS;
+				outFPS.precision(6);
+				outFPS << "FPS: " << DirectXApp::fps << std::endl;
+				outFPS << "mSPF: " << DirectXApp::mspf << std::endl;
+
+				HRESULT hr = direct2D->writeFactory->CreateTextLayout(
+					outFPS.str().c_str(),					// string
+					(UINT32)outFPS.str().size(),			// string length
+					direct2D->textFormatFPS.Get(),			// text format
+					(float)m_appWindow->m_clientWidth,		// max width
+					(float)m_appWindow->m_clientHeight,		// max height
+					&direct2D->textLayoutFPS				// text layout
+				);
+				if (FAILED(hr))
+				{
+					return std::runtime_error("Critical error: Failed to create the text layout for FPS information!");
+				}
+			}
 
 			// Reset
 			nFrames = 0;
 			elapsedTime += 1.0;
 		}
+
+		return {};
 	}
 }

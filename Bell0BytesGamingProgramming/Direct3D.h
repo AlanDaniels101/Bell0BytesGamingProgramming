@@ -41,11 +41,12 @@ namespace graphics
 	{
 	public:
 		friend class core::DirectXApp;
+		friend class Direct2D;
 
 		Direct3D(core::DirectXApp* directXApp);
 		~Direct3D();
 
-		util::Expected<void> Present();							// display the next backbuffer
+		util::Expected<int> Present();							// display the next backbuffer
 		void ClearBuffers();		
 
 	private:
