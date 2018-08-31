@@ -219,6 +219,9 @@ namespace graphics
 			}
 		}
 
+		// Re-initialize the GPU pipeline
+		InitPipeline();
+
 		// Log success
 		if (directXApp->m_hasStarted)
 		{
@@ -237,6 +240,9 @@ namespace graphics
 			return std::runtime_error("Direct3D failed to present the scene!");
 		}
 
+		// Rebind depth and stencil buffer
+		devCon->OMSetRenderTargets(1, renderTargetView.GetAddressOf(), depthStencilView.Get());
+
 		return 0;
 	}
 
@@ -246,5 +252,99 @@ namespace graphics
 		float black[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		devCon->ClearRenderTargetView(renderTargetView.Get(), black);
 		devCon->ClearDepthStencilView(depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	}
+
+	util::Expected<ShaderBuffer> Direct3D::LoadShader(std::wstring filename)
+	{
+		// Load the precompiled .cso shader
+		ShaderBuffer sb;
+		byte* fileData = nullptr;
+
+		std::ifstream csoFile(filename, std::ios::in | std::ios::binary | std::ios::ate);
+
+		if (csoFile.is_open())
+		{
+			sb.size = (unsigned int)csoFile.tellg();
+
+			// collect shader data
+			fileData = new byte[sb.size];
+			csoFile.seekg(0, std::ios::beg);
+			csoFile.read(reinterpret_cast<char*>(fileData), sb.size);
+			csoFile.close();
+			sb.buffer = fileData;
+		}
+		else
+		{
+			return "Critical error: Unable to open the compiled shader object!";
+		}
+
+		return sb;
+	}
+
+	util::Expected<void> Direct3D::InitPipeline()
+	{
+		// Load the precompiled shaders
+
+#ifndef NDEBUG
+		util::Expected<ShaderBuffer> vertexShaderBuffer = LoadShader(L"../x64/Debug/vertexShader.cso");
+		util::Expected<ShaderBuffer> pixelShaderBuffer = LoadShader(L"../x64/Debug/pixelShader.cso");
+#else
+		util::Expected<ShaderBuffer> vertexShaderBuffer = LoadShader(L"../x64/Release/vertexShader.cso");
+		util::Expected<ShaderBuffer> pixelShaderBuffer = LoadShader(L"../x64/Release/pixelShader.cso");
+#endif
+
+		if (!vertexShaderBuffer.isValid() || !pixelShaderBuffer.isValid())
+		{
+			return "Critical error: Unable to read Compiled Shader Object files!";
+		}
+
+		// Create the shaders
+		HRESULT hr = dev->CreateVertexShader(vertexShaderBuffer.get().buffer, vertexShaderBuffer.get().size, nullptr, &standardVertexShader);
+		if (FAILED(hr))
+		{
+			return "Critical error: Unable to create the vertex shader!";
+		}
+		hr = dev->CreatePixelShader(pixelShaderBuffer.get().buffer, pixelShaderBuffer.get().size, nullptr, &standardPixelShader);
+		if (FAILED(hr))
+		{
+			return "Critical error: Unable to create the pixel shader!";
+		}
+
+		// Set these shaders as active
+		devCon->VSSetShader(standardVertexShader.Get(), nullptr, 0);
+		devCon->PSSetShader(standardPixelShader.Get(), nullptr, 0);
+
+		// Set the input layout for the vertex shader
+
+		// Specify the input layout
+		D3D11_INPUT_ELEMENT_DESC ied[] = { {
+			"POSITION",						// semantic
+			0,								// semantic index
+			DXGI_FORMAT_R32G32B32_FLOAT,	// data format
+			0,								// input slot (which input-assembler to use)
+			0,								// byte offset between elements
+			D3D11_INPUT_PER_VERTEX_DATA,	// type of data
+			0								// number of instances with the same data (0 for vertex data)
+		} };
+
+		// Create the input layout
+		Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+		hr = dev->CreateInputLayout(
+			ied,								// input element descriptions
+			ARRAYSIZE(ied),						// number of input element descriptions
+			vertexShaderBuffer.get().buffer,	// shader file
+			vertexShaderBuffer.get().size,		// shader length
+			&inputLayout						// out: input layout
+		);
+
+		// Set this input layout as active
+		devCon->IASetInputLayout(inputLayout.Get());
+
+		// Delete shader buffer pointers
+		delete vertexShaderBuffer.get().buffer;
+		delete pixelShaderBuffer.get().buffer;
+
+		util::ServiceLocator::GetFileLogger()->Print<util::SeverityType::info>("The rendering pipeline was successfully initialized.");
+		return {};
 	}
 }

@@ -30,6 +30,8 @@
 
 #pragma endregion
 
+// Forward declarations
+class DirectXGame;
 namespace core
 {
 	class DirectXApp;
@@ -37,11 +39,26 @@ namespace core
 
 namespace graphics
 {
+	// Represents a single vertex (point)
+	struct Vertex
+	{
+		float x;
+		float y;
+		float z;
+	};
+
+	struct ShaderBuffer
+	{
+		BYTE* buffer;
+		int size;
+	};
+
 	class Direct3D
 	{
 	public:
 		friend class core::DirectXApp;
 		friend class Direct2D;
+		friend class DirectXGame;
 
 		Direct3D(core::DirectXApp* directXApp);
 		~Direct3D();
@@ -50,8 +67,10 @@ namespace graphics
 		void ClearBuffers();		
 
 	private:
-		util::Expected<void> CreateResources();					// create device resources
-		util::Expected<void> OnResize();						// resize resources
+		util::Expected<void> CreateResources();								// create device resources
+		util::Expected<void> OnResize();									// resize resources
+		util::Expected<ShaderBuffer> LoadShader(std::wstring filename);
+		util::Expected<void> InitPipeline();								// initialize the graphics pipeline
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D11Device> dev;							// device
@@ -59,6 +78,10 @@ namespace graphics
 		Microsoft::WRL::ComPtr<IDXGISwapChain> swapChain;					// swap chain
 		Microsoft::WRL::ComPtr<ID3D11RenderTargetView> renderTargetView;	// render target
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;	// depth and stencil buffers
+
+																			
+		Microsoft::WRL::ComPtr<ID3D11VertexShader> standardVertexShader;	// the vertex shader
+		Microsoft::WRL::ComPtr<ID3D11PixelShader> standardPixelShader;		// the pixel shader
 
 		DXGI_FORMAT desiredColoredFormat;
 
