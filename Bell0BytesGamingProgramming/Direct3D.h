@@ -42,9 +42,15 @@ namespace graphics
 	// Represents a single vertex (point)
 	struct Vertex
 	{
+		// position
 		float x;
 		float y;
 		float z;
+
+		// color
+		float r;
+		float g;
+		float b;
 	};
 
 	struct ShaderBuffer

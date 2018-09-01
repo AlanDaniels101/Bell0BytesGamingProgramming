@@ -1,5 +1,4 @@
-float4 main() : SV_TARGET
+float4 main(float4 pos : SV_POSITION, float4 col : COLOR) : SV_TARGET
 {
-	// Pick up only the red and green parts, making yellow (the SV_TARGET/COLOR is RGBA)
-	return float4(1.0f, 1.0f, 0.0f, 1.0f);
+	return col;
 }

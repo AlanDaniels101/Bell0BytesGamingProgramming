@@ -317,7 +317,8 @@ namespace graphics
 		// Set the input layout for the vertex shader
 
 		// Specify the input layout
-		D3D11_INPUT_ELEMENT_DESC ied[] = { {
+		D3D11_INPUT_ELEMENT_DESC ied[] = { 
+		{
 			"POSITION",						// semantic
 			0,								// semantic index
 			DXGI_FORMAT_R32G32B32_FLOAT,	// data format
@@ -325,7 +326,17 @@ namespace graphics
 			0,								// byte offset between elements
 			D3D11_INPUT_PER_VERTEX_DATA,	// type of data
 			0								// number of instances with the same data (0 for vertex data)
-		} };
+		}, 
+		{
+			"COLOR",
+			0,
+			DXGI_FORMAT_R32G32B32_FLOAT,
+			0,
+			12,
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		}
+		};
 
 		// Create the input layout
 		Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
