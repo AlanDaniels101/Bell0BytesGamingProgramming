@@ -83,6 +83,8 @@ namespace core
 		std::wstring m_pathToMyDocuments;
 		std::wstring m_pathToLogFiles;
 		std::wstring m_pathToConfigurationFiles;
+		std::wstring m_prefFile;						// the config file specifying resolution
+
 
 		bool m_hasValidConfigurationFile;
 

@@ -20,6 +20,11 @@
 
 #pragma endregion
 
+namespace graphics
+{
+	class Direct3D;
+}
+
 namespace core
 {
 	class DirectXApp;
@@ -27,14 +32,15 @@ namespace core
 	class Window
 	{
 	public:
+		friend class DirectXApp;
+		friend class graphics::Direct3D;
+
 		Window(DirectXApp* directXApp);
 		~Window();
 
 		inline HWND GetMainWindowHandle() { return m_hWindow; };
 
 		virtual LRESULT CALLBACK MsgProc(HWND hWnd, unsigned int msg, WPARAM wParam, LPARAM lParam);
-
-		friend class DirectXApp;
 
 	private:
 		util::Expected<void> Init();		// initialize the window

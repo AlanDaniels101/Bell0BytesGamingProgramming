@@ -35,6 +35,7 @@ class DirectXGame;
 namespace core
 {
 	class DirectXApp;
+	class Window;
 }
 
 namespace graphics
@@ -65,18 +66,23 @@ namespace graphics
 		friend class core::DirectXApp;
 		friend class Direct2D;
 		friend class DirectXGame;
+		friend class core::Window;
 
 		Direct3D(core::DirectXApp* directXApp);
 		~Direct3D();
-
-		util::Expected<int> Present();							// display the next backbuffer
-		void ClearBuffers();		
 
 	private:
 		util::Expected<void> CreateResources();								// create device resources
 		util::Expected<void> OnResize();									// resize resources
 		util::Expected<ShaderBuffer> LoadShader(std::wstring filename);
 		util::Expected<void> InitPipeline();								// initialize the graphics pipeline
+		void ChangeResolution(bool increase);
+
+		util::Expected<void> WriteCurrentModeDescriptionToConfigurationFile();
+		util::Expected<void> ReadConfigurationFile();
+
+		util::Expected<int> Present();							// display the next backbuffer
+		void ClearBuffers();
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D11Device> dev;							// device
@@ -90,6 +96,15 @@ namespace graphics
 		Microsoft::WRL::ComPtr<ID3D11PixelShader> standardPixelShader;		// the pixel shader
 
 		DXGI_FORMAT desiredColoredFormat;
+
+		// Display modes
+		unsigned int numberOfSupportedModes;
+		DXGI_MODE_DESC* supportedModes;
+		DXGI_MODE_DESC currentModeDescription;
+		unsigned int currentModeIndex;
+		bool startInFullscreen;
+		BOOL currentlyInFullscreen;
+		bool changeMode;
 
 		core::DirectXApp* directXApp;
 	};

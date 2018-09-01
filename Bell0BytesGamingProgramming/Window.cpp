@@ -270,8 +270,26 @@ namespace core
 		case WM_KEYDOWN:
 			directXApp->OnKeyDown(wParam, lParam);
 			return 0;
-		}
 
+		case WM_WINDOWPOSCHANGED:
+			// Check for fullscreen switch
+			if (directXApp->m_hasStarted)
+			{
+				BOOL fullscreen;
+				directXApp->direct3D->swapChain->GetFullscreenState(&fullscreen, nullptr);
+				if (fullscreen != directXApp->direct3D->currentlyInFullscreen)
+				{
+					// Fullscreen mode change - pause, resize, and unpause
+					directXApp->m_isPaused = true;
+					directXApp->timer->Stop();
+					directXApp->OnResize();
+					directXApp->timer->Start();
+					directXApp->m_isPaused = false;
+				}
+			}
+			return 0;
+		}
+		
 		// Default Windows message handler
 		return DefWindowProc(hWnd, msg, wParam, lParam);
 	}

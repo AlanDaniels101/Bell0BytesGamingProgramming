@@ -171,6 +171,16 @@ namespace core
 			PostMessage(m_appWindow->m_hWindow, WM_CLOSE, 0, 0);
 			break;
 
+		case VK_PRIOR:
+			// Page up -> increase resolution
+			direct3D->ChangeResolution(true);
+			break;
+
+		case VK_NEXT:
+			// Page down -> decrease resolution
+			direct3D->ChangeResolution(false);
+			break;
+
 		default:
 			break;
 		}
